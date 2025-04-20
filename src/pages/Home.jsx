@@ -81,10 +81,7 @@ const Home = () => {
 
               {/* Right Column - Circular Gallery */}
               <div className="relative py-12">
-                <CircularGallery 
-                  images={galleryImages}
-                  centerImage={Images.business}
-                />
+                <CircularGallery images={galleryImages} />
               </div>
             </div>
           </div>

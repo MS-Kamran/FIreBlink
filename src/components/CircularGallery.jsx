@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect, useMemo } from 'react';
 import { useScroll, useTransform } from 'framer-motion';
 import PreCachedImage from './PreCachedImage';
+import OptimizedBusinessImage from './OptimizedBusinessImage';
 
 const CircularGallery = ({ images, centerImage }) => {
   const containerRef = useRef(null);
@@ -8,59 +9,26 @@ const CircularGallery = ({ images, centerImage }) => {
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const [loadedImages, setLoadedImages] = useState(0);
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
-  const [isCenterImageLoaded, setIsCenterImageLoaded] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [scrollY, setScrollY] = useState(0);
+  const [centerImageLoaded, setCenterImageLoaded] = useState(false);
 
-  // Preload center image first with high priority
+  // Simple image preloading
   useEffect(() => {
-    const preloadCenterImage = () => {
-      const img = new Image();
-      img.src = centerImage;
-      img.onload = () => {
-        setIsCenterImageLoaded(true);
-      };
-    };
-    preloadCenterImage();
-  }, [centerImage]);
-
-  // Preload orbital images afterward
-  useEffect(() => {
-    if (!isCenterImageLoaded) return; // Wait for center image to load first
-    
-    const imagesToLoad = [...images];
+    const imagesToLoad = [...images, centerImage];
     let loadedCount = 0;
 
-    const loadImage = (src) => {
-      return new Promise((resolve) => {
-        const img = new Image();
-        img.src = src;
-        img.onload = () => {
-          loadedCount++;
-          setLoadedImages(prev => prev + 1);
-          if (loadedCount === imagesToLoad.length) {
-            setIsInitialLoadComplete(true);
-          }
-          resolve();
-        };
-        img.onerror = resolve;
-      });
-    };
-
-    // Load first 3 images immediately, then the rest
-    const firstBatch = imagesToLoad.slice(0, 3);
-    const restBatch = imagesToLoad.slice(3);
-    
-    Promise.all(firstBatch.map(loadImage)).then(() => {
-      // Start showing gallery after first batch
-      if (!isInitialLoadComplete) {
-        setIsInitialLoadComplete(true);
-      }
-      
-      // Load the rest of the images
-      restBatch.forEach(loadImage);
+    imagesToLoad.forEach(src => {
+      const img = new Image();
+      img.src = src;
+      img.onload = () => {
+        loadedCount++;
+        if (loadedCount === imagesToLoad.length) {
+          setIsInitialLoadComplete(true);
+        }
+      };
     });
-  }, [images, isCenterImageLoaded, isInitialLoadComplete]);
+  }, [images, centerImage]);
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -121,22 +89,14 @@ const CircularGallery = ({ images, centerImage }) => {
   };
 
   const handleCenterImageLoad = () => {
-    setIsCenterImageLoaded(true);
+    setCenterImageLoaded(true);
+    setLoadedImages(prev => prev + 1);
   };
 
-  if (!isCenterImageLoaded) {
+  if (!isInitialLoadComplete) {
     return (
       <div className="w-full flex justify-center py-12">
-        <div 
-          className="rounded-full" 
-          style={{ 
-            width: 520, 
-            height: 520,
-            background: 'linear-gradient(135deg, #f3f3f3 8%, #fafafa 18%, #f3f3f3 33%)',
-            backgroundSize: '200% 100%',
-            animation: 'shimmer 1.5s linear infinite'
-          }} 
-        />
+        <div className="rounded-full bg-neutral-50" style={{ width: 520, height: 520 }} />
       </div>
     );
   }
@@ -171,7 +131,7 @@ const CircularGallery = ({ images, centerImage }) => {
           }}
         />
 
-        {/* Center Image with enhanced 3D effect and eager loading */}
+        {/* Center Image with enhanced 3D effect - Using OptimizedBusinessImage */}
         <div
           className="absolute left-1/2 top-1/2 rounded-full overflow-hidden z-30"
           style={{
@@ -190,17 +150,10 @@ const CircularGallery = ({ images, centerImage }) => {
             transformStyle: 'preserve-3d'
           }}
         >
-          <img
-            src={centerImage}
-            alt="Center Image"
-            className="w-full h-full object-cover transform-gpu"
-            style={{
-              backfaceVisibility: 'hidden',
-              WebkitBackfaceVisibility: 'hidden',
-            }}
+          <OptimizedBusinessImage
+            className="w-full h-full"
             onLoad={handleCenterImageLoad}
-            loading="eager"
-            fetchPriority="high"
+            priority={true}
           />
         </div>
 
@@ -226,11 +179,7 @@ const CircularGallery = ({ images, centerImage }) => {
                 zIndex: hoveredIndex === index ? 20 : 10,
                 backfaceVisibility: 'hidden',
                 WebkitBackfaceVisibility: 'hidden',
-                transformStyle: 'preserve-3d',
-                opacity: isInitialLoadComplete ? 1 : 0,
-                transitionProperty: 'opacity, transform',
-                transitionDuration: '0.4s, 0.4s',
-                transitionTimingFunction: 'ease-in-out'
+                transformStyle: 'preserve-3d'
               }}
             >
               <div
@@ -254,7 +203,6 @@ const CircularGallery = ({ images, centerImage }) => {
                   alt={`Gallery image ${index + 1}`}
                   className="w-full h-full object-cover"
                   onLoad={() => setLoadedImages(prev => prev + 1)}
-                  loading="lazy"
                 />
               </div>
             </div>
