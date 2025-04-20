@@ -9,6 +9,8 @@ const CircularGallery = ({ images, centerImage }) => {
   const [loadedImages, setLoadedImages] = useState(0);
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
   const [rotation, setRotation] = useState(0);
+  const [scrollDirection, setScrollDirection] = useState('none');
+  const [lastScrollY, setLastScrollY] = useState(0);
 
   // Simple image preloading
   useEffect(() => {
@@ -32,13 +34,31 @@ const CircularGallery = ({ images, centerImage }) => {
     offset: ["start end", "end start"]
   });
 
-  // Update rotation smoothly
+  // Update rotation smoothly and detect scroll direction
   useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      if (currentScrollY > lastScrollY) {
+        setScrollDirection('down');
+      } else if (currentScrollY < lastScrollY) {
+        setScrollDirection('up');
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    
     const unsubscribe = scrollYProgress.on("change", latest => {
       setRotation(latest * 360);
     });
-    return () => unsubscribe();
-  }, [scrollYProgress]);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      unsubscribe();
+    };
+  }, [scrollYProgress, lastScrollY]);
 
   useEffect(() => {
     const updateDimensions = () => {
@@ -63,9 +83,14 @@ const CircularGallery = ({ images, centerImage }) => {
     const rotationAngle = baseAngle + progress;
     const angleInRadians = rotationAngle * (Math.PI / 180);
     
+    // Add subtle movement based on scroll direction
+    const scrollOffset = scrollDirection === 'down' ? 5 : scrollDirection === 'up' ? -5 : 0;
+    const radiusOffset = radius + scrollOffset;
+    
     return {
-      x: Math.cos(angleInRadians) * radius,
-      y: Math.sin(angleInRadians) * radius
+      x: Math.cos(angleInRadians) * radiusOffset,
+      y: Math.sin(angleInRadians) * radiusOffset,
+      z: Math.sin(angleInRadians * 2) * 10 // Add slight z-axis movement
     };
   };
 
@@ -92,70 +117,36 @@ const CircularGallery = ({ images, centerImage }) => {
           perspective: '1000px'
         }}
       >
-        {/* Background Effect - Premium Drop Shadow */}
+        {/* Premium Background Elements */}
         <div 
-          className="absolute rounded-full opacity-20 bg-gradient-to-br from-[#ff4c00]/40 to-[#5b1900]/40"
+          className="absolute w-full h-full rounded-full"
           style={{
-            width: containerSize.width * 0.85,
-            height: containerSize.width * 0.85,
-            left: '50%',
-            top: '50%',
+            background: 'radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%)',
+            filter: 'blur(20px)',
+            opacity: 0.7,
+            transform: 'translateZ(0)'
+          }}
+        />
+        
+        <div 
+          className="absolute w-11/12 h-11/12 left-1/2 top-1/2 rounded-full"
+          style={{
             transform: 'translate(-50%, -50%)',
-            filter: 'blur(40px)',
-            zIndex: 0
+            border: '1px solid rgba(255, 76, 0, 0.1)',
+            boxShadow: '0 0 40px rgba(91, 25, 0, 0.05)'
           }}
         />
-
-        {/* Decorative Circle 1 - Outer dashed circle */}
+        
+        {/* Animated ring */}
         <div 
-          className="absolute rounded-full border-2 border-dashed border-[#5b1900]/15"
+          className="absolute w-3/4 h-3/4 left-1/2 top-1/2 rounded-full"
           style={{
-            width: containerSize.width * 0.9,
-            height: containerSize.width * 0.9,
-            left: '50%',
-            top: '50%',
-            transform: `translate(-50%, -50%) rotate(${rotation * 0.5}deg)`,
-            transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            zIndex: 1
+            transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
+            border: '1px dashed rgba(91, 25, 0, 0.1)',
+            borderRadius: '50%',
+            transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
         />
-
-        {/* Decorative Circle 2 - Solid thin circle */}
-        <div 
-          className="absolute rounded-full border border-solid border-[#ff4c00]/10"
-          style={{
-            width: containerSize.width * 0.75,
-            height: containerSize.width * 0.75,
-            left: '50%',
-            top: '50%',
-            transform: 'translate(-50%, -50%)',
-            zIndex: 1
-          }}
-        />
-
-        {/* Decorative Dots - Premium look */}
-        {[...Array(12)].map((_, i) => {
-          const angle = (i * 30) * (Math.PI / 180);
-          const radius = containerSize.width * 0.42;
-          const x = Math.cos(angle) * radius;
-          const y = Math.sin(angle) * radius;
-          return (
-            <div
-              key={i}
-              className="absolute rounded-full"
-              style={{
-                width: i % 3 === 0 ? 4 : 2, 
-                height: i % 3 === 0 ? 4 : 2,
-                backgroundColor: i % 3 === 0 ? '#ff4c00' : '#5b1900',
-                opacity: i % 3 === 0 ? 0.2 : 0.1,
-                left: '50%',
-                top: '50%',
-                transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
-                zIndex: 2
-              }}
-            />
-          );
-        })}
 
         {/* Center Image */}
         <div
@@ -165,10 +156,10 @@ const CircularGallery = ({ images, centerImage }) => {
             height: imageSizes.center.height,
             transform: 'translate(-50%, -50%)',
             border: '4px solid #5b1900',
-            boxShadow: '0 8px 32px rgba(91, 25, 0, 0.15), 0 0 0 2px rgba(255, 76, 0, 0.05)',
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
-            transformStyle: 'preserve-3d'
+            transformStyle: 'preserve-3d',
+            boxShadow: '0 10px 30px rgba(91, 25, 0, 0.2)'
           }}
         >
           <PreCachedImage
@@ -194,7 +185,7 @@ const CircularGallery = ({ images, centerImage }) => {
                 transform: `translate3d(
                   calc(-50% + ${position.x}px), 
                   calc(-50% + ${position.y}px),
-                  0
+                  ${position.z}px
                 ) scale(${scale})`,
                 transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 zIndex: hoveredIndex === index ? 20 : 10,
@@ -208,12 +199,13 @@ const CircularGallery = ({ images, centerImage }) => {
                 style={{
                   border: '3px solid #ff4c00',
                   boxShadow: hoveredIndex === index 
-                    ? '0 10px 25px rgba(255, 76, 0, 0.3), 0 0 0 1px rgba(255, 76, 0, 0.5)'
-                    : '0 5px 15px rgba(91, 25, 0, 0.1), 0 0 0 1px rgba(255, 76, 0, 0.1)',
+                    ? '0 10px 25px rgba(255, 76, 0, 0.25), 0 0 15px rgba(255, 76, 0, 0.15)'
+                    : '0 8px 20px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.05)',
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                   backfaceVisibility: 'hidden',
                   WebkitBackfaceVisibility: 'hidden',
-                  transformStyle: 'preserve-3d'
+                  transformStyle: 'preserve-3d',
+                  filter: hoveredIndex === index ? 'brightness(1.05)' : 'none'
                 }}
                 onMouseEnter={() => setHoveredIndex(index)}
                 onMouseLeave={() => setHoveredIndex(null)}
@@ -226,6 +218,27 @@ const CircularGallery = ({ images, centerImage }) => {
                 />
               </div>
             </div>
+          );
+        })}
+        
+        {/* Decorative dots */}
+        {[...Array(8)].map((_, i) => {
+          const angle = (i * 45) * (Math.PI / 180);
+          const radius = containerSize.width * 0.38;
+          const x = Math.cos(angle) * radius;
+          const y = Math.sin(angle) * radius;
+          
+          return (
+            <div
+              key={i}
+              className="absolute left-1/2 top-1/2 rounded-full bg-[#5b1900]/10"
+              style={{
+                width: 3,
+                height: 3,
+                transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
+                opacity: 0.6
+              }}
+            />
           );
         })}
       </div>
