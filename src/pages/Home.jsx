@@ -4,6 +4,7 @@ import { useRef, useState, useEffect } from 'react';
 import { Images, galleryImages } from '../utils/images';
 import Business from '../assets/image/Business.jpg';
 import OptimizedImage from '../components/OptimizedImage';
+import CircularGallery from '../components/CircularGallery';
 
 const CircularGallery = () => {
   const containerRef = useRef(null);
@@ -258,7 +259,10 @@ const Home = () => {
 
               {/* Right Column - Circular Gallery */}
               <div className="relative py-12">
-                <CircularGallery />
+                <CircularGallery 
+                  images={galleryImages}
+                  centerImage={Images.business}
+                />
               </div>
             </div>
           </div>
