@@ -92,6 +92,43 @@ const CircularGallery = ({ images, centerImage }) => {
           perspective: '1000px'
         }}
       >
+        {/* Background Shadow */}
+        <div 
+          className="absolute left-1/2 top-1/2 rounded-full"
+          style={{
+            width: containerSize.width * 0.85,
+            height: containerSize.width * 0.85,
+            transform: 'translate(-50%, -50%)',
+            background: 'radial-gradient(circle, rgba(91,25,0,0.05) 0%, rgba(255,255,255,0) 70%)',
+            boxShadow: '0 20px 60px rgba(91,25,0,0.08)'
+          }}
+        />
+
+        {/* Decorative Circle */}
+        <div 
+          className="absolute left-1/2 top-1/2 rounded-full border-2 border-dashed"
+          style={{
+            width: containerSize.width * 0.72,
+            height: containerSize.width * 0.72,
+            transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
+            borderColor: 'rgba(91,25,0,0.08)',
+            transition: 'transform 0.1s linear',
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden'
+          }}
+        />
+
+        {/* Outer Circle */}
+        <div 
+          className="absolute left-1/2 top-1/2 rounded-full"
+          style={{
+            width: containerSize.width * 0.78,
+            height: containerSize.width * 0.78,
+            transform: 'translate(-50%, -50%)',
+            border: '1px solid rgba(255,76,0,0.1)'
+          }}
+        />
+
         {/* Center Image */}
         <div
           className="absolute left-1/2 top-1/2 rounded-full overflow-hidden z-30"
@@ -102,7 +139,8 @@ const CircularGallery = ({ images, centerImage }) => {
             border: '4px solid #5b1900',
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
-            transformStyle: 'preserve-3d'
+            transformStyle: 'preserve-3d',
+            boxShadow: '0 8px 30px rgba(91,25,0,0.2)'
           }}
         >
           <PreCachedImage
@@ -142,8 +180,8 @@ const CircularGallery = ({ images, centerImage }) => {
                 style={{
                   border: '3px solid #ff4c00',
                   boxShadow: hoveredIndex === index 
-                    ? '0 8px 16px rgba(255,76,0,0.2)'
-                    : '0 4px 8px rgba(0,0,0,0.1)',
+                    ? '0 8px 25px rgba(255,76,0,0.25)'
+                    : '0 5px 15px rgba(91,25,0,0.12)',
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                   backfaceVisibility: 'hidden',
                   WebkitBackfaceVisibility: 'hidden',
@@ -162,6 +200,20 @@ const CircularGallery = ({ images, centerImage }) => {
             </div>
           );
         })}
+
+        {/* Decorative Dots */}
+        {[...Array(8)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute left-1/2 top-1/2 rounded-full bg-[#5b1900]"
+            style={{
+              width: 4,
+              height: 4,
+              opacity: 0.15,
+              transform: `translate(-50%, -50%) rotate(${i * 45}deg) translateY(${containerSize.width * 0.39}px)`,
+            }}
+          />
+        ))}
       </div>
     </div>
   );
