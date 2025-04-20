@@ -10,22 +10,38 @@ const CircularGallery = ({ images, centerImage }) => {
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [scrollY, setScrollY] = useState(0);
+  const [isCenterImageLoaded, setIsCenterImageLoaded] = useState(false);
 
-  // Simple image preloading
+  // Calculate dimensions immediately to avoid layout shifts
   useEffect(() => {
-    const imagesToLoad = [...images, centerImage];
-    let loadedCount = 0;
+    const width = window.innerWidth;
+    const optimalSize = Math.min(width * 0.8, 520);
+    setContainerSize({ width: optimalSize, height: optimalSize });
+  }, []);
 
-    imagesToLoad.forEach(src => {
-      const img = new Image();
-      img.src = src;
-      img.onload = () => {
-        loadedCount++;
-        if (loadedCount === imagesToLoad.length) {
-          setIsInitialLoadComplete(true);
-        }
-      };
-    });
+  // Simple image preloading with priority for center image
+  useEffect(() => {
+    // Load center image first
+    const centerImg = new Image();
+    centerImg.src = centerImage;
+    centerImg.onload = () => {
+      setIsCenterImageLoaded(true);
+      
+      // Then load orbital images
+      const orbitalImages = [...images];
+      let loadedCount = 0;
+      
+      orbitalImages.forEach(src => {
+        const img = new Image();
+        img.src = src;
+        img.onload = () => {
+          loadedCount++;
+          if (loadedCount === orbitalImages.length) {
+            setIsInitialLoadComplete(true);
+          }
+        };
+      });
+    };
   }, [images, centerImage]);
 
   const { scrollYProgress } = useScroll({
@@ -86,17 +102,13 @@ const CircularGallery = ({ images, centerImage }) => {
     };
   };
 
-  const handleImageLoad = () => {
-    setLoadedImages(prev => prev + 1);
+  const handleCenterImageLoad = () => {
+    setIsCenterImageLoaded(true);
   };
 
-  if (!isInitialLoadComplete) {
-    return (
-      <div className="w-full flex justify-center py-12">
-        <div className="rounded-full bg-neutral-50" style={{ width: 520, height: 520 }} />
-      </div>
-    );
-  }
+  const handleOrbitalImageLoad = () => {
+    setLoadedImages(prev => prev + 1);
+  };
 
   // Calculate center image subtle movement based on scroll
   const centerMovement = {
@@ -105,6 +117,7 @@ const CircularGallery = ({ images, centerImage }) => {
     scale: 1 + Math.sin(scrollY * 0.002) * 0.03
   };
 
+  // Always render the gallery structure, but with placeholders if not loaded
   return (
     <div className="w-full flex justify-center py-12">
       <div 
@@ -113,7 +126,9 @@ const CircularGallery = ({ images, centerImage }) => {
         style={{ 
           width: containerSize.width,
           height: containerSize.height,
-          perspective: '1200px'
+          perspective: '1200px',
+          opacity: containerSize.width === 0 ? 0 : 1,
+          transition: 'opacity 0.5s ease-out'
         }}
       >
         {/* Decorative orbit rings */}
@@ -128,7 +143,7 @@ const CircularGallery = ({ images, centerImage }) => {
           }}
         />
 
-        {/* Center Image with enhanced 3D effect */}
+        {/* Center Image Container - Always present for stable layout */}
         <div
           className="absolute left-1/2 top-1/2 rounded-full overflow-hidden z-30"
           style={{
@@ -147,11 +162,34 @@ const CircularGallery = ({ images, centerImage }) => {
             transformStyle: 'preserve-3d'
           }}
         >
+          {/* Center image placeholder that's always visible */}
+          <div 
+            className="absolute inset-0 bg-[#f8f5f0]"
+            style={{
+              opacity: isCenterImageLoaded ? 0 : 1,
+              transition: 'opacity 0.5s ease-out',
+              background: 'radial-gradient(circle at center, #f8f5f0 0%, #efe9e0 100%)',
+            }}
+          >
+            <div 
+              className="absolute inset-0 flex items-center justify-center"
+              style={{
+                opacity: 0.15,
+                transform: 'scale(0.5)'
+              }}
+            >
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="#5b1900">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" opacity="0.3"/>
+                <path d="M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/>
+              </svg>
+            </div>
+          </div>
+
           <PreCachedImage
             src={centerImage}
             alt="Center Image"
             className="w-full h-full object-cover"
-            onLoad={handleImageLoad}
+            onLoad={handleCenterImageLoad}
           />
         </div>
 
@@ -177,7 +215,12 @@ const CircularGallery = ({ images, centerImage }) => {
                 zIndex: hoveredIndex === index ? 20 : 10,
                 backfaceVisibility: 'hidden',
                 WebkitBackfaceVisibility: 'hidden',
-                transformStyle: 'preserve-3d'
+                transformStyle: 'preserve-3d',
+                opacity: isCenterImageLoaded ? 1 : 0,
+                transitionDelay: `${index * 0.05}s`,
+                transitionProperty: 'transform, opacity',
+                transitionDuration: '0.4s, 0.6s',
+                transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1), ease-out'
               }}
             >
               <div
@@ -200,7 +243,7 @@ const CircularGallery = ({ images, centerImage }) => {
                   src={src}
                   alt={`Gallery image ${index + 1}`}
                   className="w-full h-full object-cover"
-                  onLoad={handleImageLoad}
+                  onLoad={handleOrbitalImageLoad}
                 />
               </div>
             </div>
@@ -224,8 +267,9 @@ const CircularGallery = ({ images, centerImage }) => {
                 width: dotSize,
                 height: dotSize,
                 transform: `translate(-50%, -50%) translate(${dotX}px, ${dotY}px)`,
-                opacity,
-                transition: 'transform 0.3s ease-out'
+                opacity: isCenterImageLoaded ? opacity : 0,
+                transition: 'opacity 0.6s ease-out, transform 0.3s ease-out',
+                transitionDelay: `${i * 0.03}s`
               }}
             />
           );
