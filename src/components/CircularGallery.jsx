@@ -1,7 +1,6 @@
 import { useRef, useState, useEffect, useMemo } from 'react';
 import { useScroll, useTransform } from 'framer-motion';
 import PreCachedImage from './PreCachedImage';
-import OptimizedBusinessImage from './OptimizedBusinessImage';
 
 const CircularGallery = ({ images, centerImage }) => {
   const containerRef = useRef(null);
@@ -11,23 +10,37 @@ const CircularGallery = ({ images, centerImage }) => {
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [scrollY, setScrollY] = useState(0);
-  const [centerImageLoaded, setCenterImageLoaded] = useState(false);
+  const [isImagesPreloaded, setIsImagesPreloaded] = useState(false);
 
-  // Simple image preloading
+  // Preload all images before showing
   useEffect(() => {
     const imagesToLoad = [...images, centerImage];
     let loadedCount = 0;
 
-    imagesToLoad.forEach(src => {
-      const img = new Image();
-      img.src = src;
-      img.onload = () => {
-        loadedCount++;
-        if (loadedCount === imagesToLoad.length) {
-          setIsInitialLoadComplete(true);
-        }
-      };
-    });
+    const preloadImages = async () => {
+      const promises = imagesToLoad.map(
+        (src) =>
+          new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+              loadedCount++;
+              if (loadedCount === imagesToLoad.length) {
+                setIsImagesPreloaded(true);
+                setIsInitialLoadComplete(true);
+              }
+              resolve();
+            };
+            img.onerror = () => {
+              resolve(); // Continue even if an image fails to load
+            };
+            img.src = src;
+          })
+      );
+
+      await Promise.all(promises);
+    };
+
+    preloadImages();
   }, [images, centerImage]);
 
   const { scrollYProgress } = useScroll({
@@ -88,15 +101,60 @@ const CircularGallery = ({ images, centerImage }) => {
     };
   };
 
-  const handleCenterImageLoad = () => {
-    setCenterImageLoaded(true);
+  const handleImageLoad = () => {
     setLoadedImages(prev => prev + 1);
   };
 
   if (!isInitialLoadComplete) {
+    // Show circle placeholders while loading
     return (
       <div className="w-full flex justify-center py-12">
-        <div className="rounded-full bg-neutral-50" style={{ width: 520, height: 520 }} />
+        <div 
+          className="relative" 
+          style={{ 
+            width: 520, 
+            height: 520 
+          }}
+        >
+          {/* Center circle placeholder */}
+          <div 
+            className="absolute rounded-full bg-neutral-50" 
+            style={{ 
+              width: 520 * 0.3, 
+              height: 520 * 0.3, 
+              left: '50%', 
+              top: '50%', 
+              transform: 'translate(-50%, -50%)',
+              boxShadow: '0 0 20px rgba(91,25,0,0.1)',
+              border: '4px solid #5b1900'
+            }}
+          />
+          
+          {/* Orbital placeholders */}
+          {[...Array(Math.min(images.length, 5))].map((_, index) => {
+            const angle = (index * (360 / images.length)) * (Math.PI / 180);
+            const radius = 520 * 0.33;
+            const x = Math.cos(angle) * radius;
+            const y = Math.sin(angle) * radius;
+            
+            return (
+              <div 
+                key={index}
+                className="absolute rounded-full bg-white" 
+                style={{ 
+                  width: 520 * 0.17, 
+                  height: 520 * 0.17, 
+                  left: '50%', 
+                  top: '50%', 
+                  transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                  border: '3px solid #ff4c00',
+                  opacity: 0.5
+                }}
+              />
+            );
+          })}
+        </div>
       </div>
     );
   }
@@ -116,7 +174,9 @@ const CircularGallery = ({ images, centerImage }) => {
         style={{ 
           width: containerSize.width,
           height: containerSize.height,
-          perspective: '1200px'
+          perspective: '1200px',
+          opacity: isImagesPreloaded ? 1 : 0,
+          transition: 'opacity 0.5s ease-in-out',
         }}
       >
         {/* Decorative orbit rings */}
@@ -131,7 +191,7 @@ const CircularGallery = ({ images, centerImage }) => {
           }}
         />
 
-        {/* Center Image with enhanced 3D effect - Using OptimizedBusinessImage */}
+        {/* Center Image with enhanced 3D effect */}
         <div
           className="absolute left-1/2 top-1/2 rounded-full overflow-hidden z-30"
           style={{
@@ -150,10 +210,12 @@ const CircularGallery = ({ images, centerImage }) => {
             transformStyle: 'preserve-3d'
           }}
         >
-          <OptimizedBusinessImage
-            className="w-full h-full"
-            onLoad={handleCenterImageLoad}
-            priority={true}
+          <PreCachedImage
+            src={centerImage}
+            alt="Center Image"
+            className="w-full h-full object-cover"
+            onLoad={handleImageLoad}
+            forceRoundedCorners={true}
           />
         </div>
 
@@ -202,7 +264,8 @@ const CircularGallery = ({ images, centerImage }) => {
                   src={src}
                   alt={`Gallery image ${index + 1}`}
                   className="w-full h-full object-cover"
-                  onLoad={() => setLoadedImages(prev => prev + 1)}
+                  onLoad={handleImageLoad}
+                  forceRoundedCorners={true}
                 />
               </div>
             </div>
