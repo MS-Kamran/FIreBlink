@@ -3,6 +3,7 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRef, useState, useEffect } from 'react';
 import { Images, galleryImages } from '../utils/images';
 import Business from '../assets/image/Business.jpg';
+import OptimizedImage from '../components/OptimizedImage';
 
 const CircularGallery = () => {
   const containerRef = useRef(null);
@@ -105,10 +106,11 @@ const CircularGallery = () => {
             border: '4px solid #5b1900'
           }}
         >
-          <img
+          <OptimizedImage
             src={Images.business}
             alt="Business Center"
-            className="w-full h-full object-cover"
+            className="w-full h-full"
+            priority={true}
           />
         </motion.div>
 
@@ -155,11 +157,11 @@ const CircularGallery = () => {
               onHoverStart={() => setHoveredIndex(index)}
               onHoverEnd={() => setHoveredIndex(null)}
             >
-              <img
+              <OptimizedImage
                 src={src}
                 alt={`Gallery image ${index + 1}`}
-                className="w-full h-full object-cover"
-                loading="lazy"
+                className="w-full h-full"
+                sizes="small"
               />
             </motion.div>
           </motion.div>
