@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 
 const Footer = () => {
   return (
-    <footer className="bg-gradient-to-r from-[#2c0d00] to-[#4a1700] text-white">
+    <footer className="bg-gradient-to-r from-[#4a2500] to-[#6b3a10] text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Simple divider */}
         <div className="h-0.5 w-16 bg-[#ff4c00] mx-auto mb-10"></div>
@@ -79,7 +79,7 @@ const Footer = () => {
           </div>
         </div>
         
-        <div className="border-t border-[#3a1400] mt-10 pt-6 text-center">
+        <div className="border-t border-[#7a4a20] mt-10 pt-6 text-center">
           <p className="text-white/70">&copy; {new Date().getFullYear()} <span className="text-[#ff4c00] font-normal">Fire</span>Blink. All rights reserved.</p>
         </div>
       </div>
