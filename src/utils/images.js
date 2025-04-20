@@ -1,3 +1,4 @@
+import logo from '../assets/logo/logo.png';
 import business from '../assets/image/Business.jpg';
 import cake from '../assets/image/Cake.jpg';
 import mobileAll from '../assets/image/Mobile and all.jpg';
@@ -51,16 +52,23 @@ export const Images = {
       }
     ]
   },
-  logo: new URL('../assets/logo/logo.png', import.meta.url).href,
-  gallery: {
-    business: new URL('../assets/image/Business.jpg', import.meta.url).href,
-    cake: new URL('../assets/image/Cake.jpg', import.meta.url).href,
-    mobileAll: new URL('../assets/image/Mobile and all.jpg', import.meta.url).href,
-    mobile: new URL('../assets/image/mobile.jpg', import.meta.url).href,
-    pitha: new URL('../assets/image/pitha.jpg', import.meta.url).href,
-    supplyMap: new URL('../assets/image/supply map.jpg', import.meta.url).href,
-    supply: new URL('../assets/image/Supply.jpg', import.meta.url).href
-  }
+  logo,
+  business,
+  cake,
+  mobileAll,
+  mobile,
+  pitha,
+  supplyMap,
+  supply
 };
+
+export const galleryImages = [
+  cake,
+  mobileAll,
+  mobile,
+  pitha,
+  supplyMap,
+  supply
+];
 
 export default Images; 

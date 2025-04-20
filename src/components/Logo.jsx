@@ -1,10 +1,10 @@
-import logo from '../assets/logo/logo.png';
+import { Images } from '../utils/images';
 
 const Logo = () => {
   return (
     <div className="flex items-center gap-2">
       <img 
-        src={logo} 
+        src={Images.logo} 
         alt="FireBlink Logo" 
         className="h-12 w-auto object-contain"
       />

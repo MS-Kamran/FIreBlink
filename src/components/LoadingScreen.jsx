@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { theme } from '../utils/theme';
+import { Images } from '../utils/images';
 
 const LoadingScreen = () => {
   return (
@@ -7,7 +7,7 @@ const LoadingScreen = () => {
       <div className="relative">
         {/* Logo */}
         <motion.img
-          src="/src/assets/logo/logo.png"
+          src={Images.logo}
           alt="FireBlink Logo"
           className="w-24 h-auto"
           initial={{ opacity: 0, scale: 0.5 }}
@@ -20,8 +20,7 @@ const LoadingScreen = () => {
           {[0, 1, 2].map((index) => (
             <motion.div
               key={index}
-              className="w-2 h-2 rounded-full"
-              style={{ backgroundColor: theme.colors.primary }}
+              className="w-2 h-2 rounded-full bg-[#5b1900]"
               initial={{ scale: 0 }}
               animate={{ scale: [0, 1, 0] }}
               transition={{

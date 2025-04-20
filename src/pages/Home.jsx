@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRef, useState, useEffect } from 'react';
-import { Images } from '../utils/images';
+import { Images, galleryImages } from '../utils/images';
+import Business from '../assets/image/Business.jpg';
 
 const CircularGallery = () => {
   const containerRef = useRef(null);
@@ -13,14 +14,7 @@ const CircularGallery = () => {
     offset: ["start end", "end start"]
   });
 
-  const images = [
-    '/src/assets/image/Cake.jpg',
-    '/src/assets/image/Mobile and all.jpg',
-    '/src/assets/image/mobile.jpg',
-    '/src/assets/image/pitha.jpg',
-    '/src/assets/image/supply map.jpg',
-    '/src/assets/image/Supply.jpg'
-  ];
+  const images = galleryImages;
 
   useEffect(() => {
     const updateDimensions = () => {
@@ -112,7 +106,7 @@ const CircularGallery = () => {
           }}
         >
           <img
-            src="/src/assets/image/Business.jpg"
+            src={Images.business}
             alt="Business Center"
             className="w-full h-full object-cover"
           />
