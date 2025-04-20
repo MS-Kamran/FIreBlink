@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense, lazy } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Images } from './utils/images';
 // We're not using these logos, so they can be removed
@@ -9,13 +9,37 @@ import { Images } from './utils/images';
 // Components
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import Preload from './components/Preload';
 
-// Pages
-import Home from './pages/Home';
-import About from './pages/About';
-import Services from './pages/Services';
-import Portfolio from './pages/Portfolio';
-import Contact from './pages/Contact';
+// Lazy load pages
+const Home = lazy(() => import('./pages/Home'));
+const About = lazy(() => import('./pages/About'));
+const Services = lazy(() => import('./pages/Services'));
+const Portfolio = lazy(() => import('./pages/Portfolio'));
+const Contact = lazy(() => import('./pages/Contact'));
+
+// Loading fallback
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="flex gap-2">
+      {[...Array(3)].map((_, i) => (
+        <motion.div
+          key={i}
+          className="w-3 h-3 rounded-full bg-[#5b1900]"
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 1, 0.3],
+          }}
+          transition={{
+            duration: 0.5,
+            repeat: Infinity,
+            delay: i * 0.15,
+          }}
+        />
+      ))}
+    </div>
+  </div>
+);
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -122,19 +146,22 @@ function App() {
 
   return (
     <Router basename="/FireBlink">
+      <Preload />
       <div className="min-h-screen w-full bg-[#F8F9FA]">
         <Navbar />
         <AnimatePresence mode="wait">
           <main className="w-full">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/services" element={<Services />} />
-              <Route path="/portfolio" element={<Portfolio />} />
-              <Route path="/contact" element={<Contact />} />
-              {/* Redirect any unknown routes to home */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/services" element={<Services />} />
+                <Route path="/portfolio" element={<Portfolio />} />
+                <Route path="/contact" element={<Contact />} />
+                {/* Redirect any unknown routes to home */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Suspense>
           </main>
         </AnimatePresence>
         <Footer />
