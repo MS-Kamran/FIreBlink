@@ -9,8 +9,7 @@ const CircularGallery = ({ images, centerImage }) => {
   const [loadedImages, setLoadedImages] = useState(0);
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
   const [rotation, setRotation] = useState(0);
-  const [scrollDirection, setScrollDirection] = useState('none');
-  const [lastScrollY, setLastScrollY] = useState(0);
+  const [scrollY, setScrollY] = useState(0);
 
   // Simple image preloading
   useEffect(() => {
@@ -34,31 +33,23 @@ const CircularGallery = ({ images, centerImage }) => {
     offset: ["start end", "end start"]
   });
 
-  // Update rotation smoothly and detect scroll direction
+  // Update scroll values
   useEffect(() => {
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      
-      if (currentScrollY > lastScrollY) {
-        setScrollDirection('down');
-      } else if (currentScrollY < lastScrollY) {
-        setScrollDirection('up');
-      }
-      
-      setLastScrollY(currentScrollY);
+      setScrollY(window.scrollY);
     };
-
-    window.addEventListener('scroll', handleScroll);
     
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Update rotation smoothly with additional transforms based on scroll
+  useEffect(() => {
     const unsubscribe = scrollYProgress.on("change", latest => {
       setRotation(latest * 360);
     });
-    
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      unsubscribe();
-    };
-  }, [scrollYProgress, lastScrollY]);
+    return () => unsubscribe();
+  }, [scrollYProgress]);
 
   useEffect(() => {
     const updateDimensions = () => {
@@ -78,19 +69,20 @@ const CircularGallery = ({ images, centerImage }) => {
   }), [containerSize.width]);
 
   const calculatePosition = (index, total, progress) => {
+    // Calculate base position
     const radius = containerSize.width * 0.33;
     const baseAngle = (index * (360 / total));
     const rotationAngle = baseAngle + progress;
     const angleInRadians = rotationAngle * (Math.PI / 180);
     
-    // Add subtle movement based on scroll direction
-    const scrollOffset = scrollDirection === 'down' ? 5 : scrollDirection === 'up' ? -5 : 0;
-    const radiusOffset = radius + scrollOffset;
+    // Add subtle parallax effect based on scroll position
+    const parallaxAmount = Math.sin(scrollY * 0.002) * 5;
+    const breathingEffect = Math.sin(Date.now() * 0.001) * 3;
     
     return {
-      x: Math.cos(angleInRadians) * radiusOffset,
-      y: Math.sin(angleInRadians) * radiusOffset,
-      z: Math.sin(angleInRadians * 2) * 10 // Add slight z-axis movement
+      x: Math.cos(angleInRadians) * radius + (index % 2 === 0 ? parallaxAmount : -parallaxAmount),
+      y: Math.sin(angleInRadians) * radius + breathingEffect,
+      z: Math.sin(angleInRadians * 2) * 20 // Z-axis movement for depth
     };
   };
 
@@ -106,6 +98,13 @@ const CircularGallery = ({ images, centerImage }) => {
     );
   }
 
+  // Calculate center image subtle movement based on scroll
+  const centerMovement = {
+    x: Math.sin(scrollY * 0.001) * 3,
+    y: Math.cos(scrollY * 0.001) * 3,
+    scale: 1 + Math.sin(scrollY * 0.002) * 0.03
+  };
+
   return (
     <div className="w-full flex justify-center py-12">
       <div 
@@ -114,52 +113,38 @@ const CircularGallery = ({ images, centerImage }) => {
         style={{ 
           width: containerSize.width,
           height: containerSize.height,
-          perspective: '1000px'
+          perspective: '1200px'
         }}
       >
-        {/* Premium Background Elements */}
+        {/* Decorative orbit rings */}
         <div 
-          className="absolute w-full h-full rounded-full"
+          className="absolute left-1/2 top-1/2 rounded-full border-2 border-dashed border-[#5b1900]/10"
           style={{
-            background: 'radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%)',
-            filter: 'blur(20px)',
-            opacity: 0.7,
-            transform: 'translateZ(0)'
-          }}
-        />
-        
-        <div 
-          className="absolute w-11/12 h-11/12 left-1/2 top-1/2 rounded-full"
-          style={{
-            transform: 'translate(-50%, -50%)',
-            border: '1px solid rgba(255, 76, 0, 0.1)',
-            boxShadow: '0 0 40px rgba(91, 25, 0, 0.05)'
-          }}
-        />
-        
-        {/* Animated ring */}
-        <div 
-          className="absolute w-3/4 h-3/4 left-1/2 top-1/2 rounded-full"
-          style={{
+            width: containerSize.width * 0.7,
+            height: containerSize.width * 0.7,
             transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
-            border: '1px dashed rgba(91, 25, 0, 0.1)',
-            borderRadius: '50%',
-            transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+            transition: 'transform 0.1s linear',
+            boxShadow: 'inset 0 0 30px rgba(255,255,255,0.2), 0 0 30px rgba(91,25,0,0.05)'
           }}
         />
 
-        {/* Center Image */}
+        {/* Center Image with enhanced 3D effect */}
         <div
           className="absolute left-1/2 top-1/2 rounded-full overflow-hidden z-30"
           style={{
             width: imageSizes.center.width,
             height: imageSizes.center.height,
-            transform: 'translate(-50%, -50%)',
+            transform: `translate3d(
+              calc(-50% + ${centerMovement.x}px), 
+              calc(-50% + ${centerMovement.y}px), 
+              20px
+            ) scale(${centerMovement.scale})`,
+            transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
             border: '4px solid #5b1900',
+            boxShadow: '0 10px 30px rgba(91,25,0,0.2), 0 0 0 2px rgba(255,255,255,0.1)',
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
-            transformStyle: 'preserve-3d',
-            boxShadow: '0 10px 30px rgba(91, 25, 0, 0.2)'
+            transformStyle: 'preserve-3d'
           }}
         >
           <PreCachedImage
@@ -170,10 +155,11 @@ const CircularGallery = ({ images, centerImage }) => {
           />
         </div>
 
-        {/* Orbital Images */}
+        {/* Orbital Images with enhanced 3D effects */}
         {images.map((src, index) => {
           const position = calculatePosition(index, images.length, rotation);
-          const scale = hoveredIndex === index ? 1.1 : 1;
+          const scale = hoveredIndex === index ? 1.15 : 1;
+          const depth = Math.sin((rotation + index * 30) * Math.PI / 180) * 50;
           
           return (
             <div
@@ -185,9 +171,9 @@ const CircularGallery = ({ images, centerImage }) => {
                 transform: `translate3d(
                   calc(-50% + ${position.x}px), 
                   calc(-50% + ${position.y}px),
-                  ${position.z}px
+                  ${position.z + depth}px
                 ) scale(${scale})`,
-                transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                transition: 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
                 zIndex: hoveredIndex === index ? 20 : 10,
                 backfaceVisibility: 'hidden',
                 WebkitBackfaceVisibility: 'hidden',
@@ -199,13 +185,13 @@ const CircularGallery = ({ images, centerImage }) => {
                 style={{
                   border: '3px solid #ff4c00',
                   boxShadow: hoveredIndex === index 
-                    ? '0 10px 25px rgba(255, 76, 0, 0.25), 0 0 15px rgba(255, 76, 0, 0.15)'
-                    : '0 8px 20px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.05)',
+                    ? '0 15px 35px rgba(255,76,0,0.25), 0 0 0 2px rgba(255,76,0,0.3), inset 0 0 10px rgba(255,255,255,0.5)'
+                    : '0 10px 20px rgba(91,25,0,0.15), 0 0 0 1px rgba(255,76,0,0.1), inset 0 0 8px rgba(255,255,255,0.3)',
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                   backfaceVisibility: 'hidden',
                   WebkitBackfaceVisibility: 'hidden',
                   transformStyle: 'preserve-3d',
-                  filter: hoveredIndex === index ? 'brightness(1.05)' : 'none'
+                  filter: `brightness(${1 + (position.z / 200)})`
                 }}
                 onMouseEnter={() => setHoveredIndex(index)}
                 onMouseLeave={() => setHoveredIndex(null)}
@@ -221,22 +207,25 @@ const CircularGallery = ({ images, centerImage }) => {
           );
         })}
         
-        {/* Decorative dots */}
-        {[...Array(8)].map((_, i) => {
-          const angle = (i * 45) * (Math.PI / 180);
-          const radius = containerSize.width * 0.38;
-          const x = Math.cos(angle) * radius;
-          const y = Math.sin(angle) * radius;
+        {/* Decorative floating dots */}
+        {[...Array(15)].map((_, i) => {
+          const dotSize = 2 + (i % 3);
+          const orbitRadius = containerSize.width * (0.3 + (i % 5) * 0.02);
+          const dotAngle = ((i * 24) + rotation) * (Math.PI / 180);
+          const dotX = Math.cos(dotAngle) * orbitRadius;
+          const dotY = Math.sin(dotAngle) * orbitRadius;
+          const opacity = 0.1 + (i % 10) * 0.02;
           
           return (
             <div
               key={i}
-              className="absolute left-1/2 top-1/2 rounded-full bg-[#5b1900]/10"
+              className="absolute left-1/2 top-1/2 rounded-full bg-[#5b1900]"
               style={{
-                width: 3,
-                height: 3,
-                transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
-                opacity: 0.6
+                width: dotSize,
+                height: dotSize,
+                transform: `translate(-50%, -50%) translate(${dotX}px, ${dotY}px)`,
+                opacity,
+                transition: 'transform 0.3s ease-out'
               }}
             />
           );

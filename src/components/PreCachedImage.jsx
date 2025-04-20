@@ -1,118 +1,99 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 const PreCachedImage = ({ src, alt, className, onLoad: parentOnLoad, ...props }) => {
   const [isLoaded, setIsLoaded] = useState(false);
-  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
+  const containerRef = useRef(null);
 
+  // Image loading
   useEffect(() => {
-    // Reset states when src changes
-    setIsLoaded(false);
-    setLoadingProgress(0);
-
     const img = new Image();
-    
-    // Show progressive loading if browser supports
-    if (window.fetch) {
-      fetch(src)
-        .then(response => {
-          const contentLength = response.headers.get('content-length');
-          if (!contentLength) {
-            return response.blob();
-          }
-          
-          const total = parseInt(contentLength, 10);
-          let loaded = 0;
-          
-          const reader = response.body.getReader();
-          
-          return new Promise((resolve, reject) => {
-            function read() {
-              reader.read().then(({ done, value }) => {
-                if (done) {
-                  resolve(null);
-                  return;
-                }
-                
-                loaded += value.length;
-                setLoadingProgress(Math.min(100, Math.round((loaded / total) * 100)));
-                read();
-              }).catch(reject);
-            }
-            
-            read();
-          });
-        })
-        .catch(() => {
-          // Fallback if fetch fails
-          img.src = src;
-        });
-    }
-    
     img.src = src;
     img.onload = () => {
       requestAnimationFrame(() => {
-        setLoadingProgress(100);
         setIsLoaded(true);
         if (parentOnLoad) parentOnLoad();
       });
     };
-    
-    return () => {
-      img.onload = null;
-    };
   }, [src, parentOnLoad]);
 
+  // Intersection observer for visibility
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  // Calculate randomized gradient angles for shimmer effect
+  const gradientAngle = Math.floor(Math.random() * 180);
+
   return (
-    <div className={className} style={{ position: 'relative', overflow: 'hidden' }}>
-      {/* Loading indicator */}
+    <div 
+      ref={containerRef} 
+      className={className} 
+      style={{ 
+        position: 'relative',
+        overflow: 'hidden',
+        backfaceVisibility: 'hidden',
+        WebkitBackfaceVisibility: 'hidden',
+        transformStyle: 'preserve-3d'
+      }}
+    >
+      {/* Shimmer loading effect */}
       {!isLoaded && (
         <div 
-          className="absolute inset-0 flex items-center justify-center"
+          className="absolute inset-0" 
           style={{ 
-            backgroundColor: '#f7f7f7',
-            backdropFilter: 'blur(5px)',
-            WebkitBackdropFilter: 'blur(5px)'
+            background: `linear-gradient(${gradientAngle}deg, #f3f3f3 8%, #fafafa 18%, #f3f3f3 33%)`,
+            backgroundSize: '200% 100%',
+            animation: 'shimmer 1.5s linear infinite',
+            transform: 'translateZ(0)',
+            WebkitBackfaceVisibility: 'hidden',
+            backfaceVisibility: 'hidden'
           }}
-        >
-          <div className="w-full max-w-[80%] bg-[#eaeaea] overflow-hidden rounded-full h-2">
-            <div 
-              className="h-full bg-gradient-to-r from-[#5b1900] to-[#ff4c00]" 
-              style={{ 
-                width: `${loadingProgress}%`,
-                transition: 'width 0.3s ease-out',
-                boxShadow: '0 0 8px rgba(255, 76, 0, 0.3)'
-              }}
-            />
-          </div>
-        </div>
+        />
       )}
       
-      {/* Actual image */}
+      {/* Actual image with scale effect */}
       <img
         src={src}
         alt={alt}
         className="w-full h-full object-cover"
         style={{ 
           opacity: isLoaded ? 1 : 0,
-          transform: `scale(${isLoaded ? 1 : 1.05})`,
-          transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-          filter: 'brightness(1.02)',
+          transform: `scale(${isLoaded && isVisible ? 1 : 1.05})`,
+          transition: 'opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)',
+          WebkitBackfaceVisibility: 'hidden',
           backfaceVisibility: 'hidden',
-          WebkitBackfaceVisibility: 'hidden'
+          filter: `contrast(${isLoaded ? 1 : 0.9}) brightness(${isLoaded ? 1 : 0.9})`,
         }}
         {...props}
       />
-      
-      {/* Image effects */}
-      {isLoaded && (
-        <div 
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: 'radial-gradient(circle at center, rgba(255,255,255,0) 50%, rgba(0,0,0,0.05) 100%)',
-            mixBlendMode: 'overlay'
-          }}
-        />
-      )}
+
+      {/* Premium overlay effects */}
+      <div 
+        className="absolute inset-0 pointer-events-none" 
+        style={{
+          boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.1)',
+          opacity: isLoaded ? 1 : 0,
+          transition: 'opacity 0.3s ease-out',
+          background: 'radial-gradient(circle at center, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0.05) 100%)'
+        }}
+      />
     </div>
   );
 };
