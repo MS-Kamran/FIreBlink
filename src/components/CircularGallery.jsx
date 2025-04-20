@@ -92,42 +92,70 @@ const CircularGallery = ({ images, centerImage }) => {
           perspective: '1000px'
         }}
       >
-        {/* Background Shadow */}
+        {/* Background Effect - Premium Drop Shadow */}
         <div 
-          className="absolute left-1/2 top-1/2 rounded-full"
+          className="absolute rounded-full opacity-20 bg-gradient-to-br from-[#ff4c00]/40 to-[#5b1900]/40"
           style={{
             width: containerSize.width * 0.85,
             height: containerSize.width * 0.85,
+            left: '50%',
+            top: '50%',
             transform: 'translate(-50%, -50%)',
-            background: 'radial-gradient(circle, rgba(91,25,0,0.05) 0%, rgba(255,255,255,0) 70%)',
-            boxShadow: '0 20px 60px rgba(91,25,0,0.08)'
+            filter: 'blur(40px)',
+            zIndex: 0
           }}
         />
 
-        {/* Decorative Circle */}
+        {/* Decorative Circle 1 - Outer dashed circle */}
         <div 
-          className="absolute left-1/2 top-1/2 rounded-full border-2 border-dashed"
+          className="absolute rounded-full border-2 border-dashed border-[#5b1900]/15"
           style={{
-            width: containerSize.width * 0.72,
-            height: containerSize.width * 0.72,
-            transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
-            borderColor: 'rgba(91,25,0,0.08)',
-            transition: 'transform 0.1s linear',
-            backfaceVisibility: 'hidden',
-            WebkitBackfaceVisibility: 'hidden'
+            width: containerSize.width * 0.9,
+            height: containerSize.width * 0.9,
+            left: '50%',
+            top: '50%',
+            transform: `translate(-50%, -50%) rotate(${rotation * 0.5}deg)`,
+            transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            zIndex: 1
           }}
         />
 
-        {/* Outer Circle */}
+        {/* Decorative Circle 2 - Solid thin circle */}
         <div 
-          className="absolute left-1/2 top-1/2 rounded-full"
+          className="absolute rounded-full border border-solid border-[#ff4c00]/10"
           style={{
-            width: containerSize.width * 0.78,
-            height: containerSize.width * 0.78,
+            width: containerSize.width * 0.75,
+            height: containerSize.width * 0.75,
+            left: '50%',
+            top: '50%',
             transform: 'translate(-50%, -50%)',
-            border: '1px solid rgba(255,76,0,0.1)'
+            zIndex: 1
           }}
         />
+
+        {/* Decorative Dots - Premium look */}
+        {[...Array(12)].map((_, i) => {
+          const angle = (i * 30) * (Math.PI / 180);
+          const radius = containerSize.width * 0.42;
+          const x = Math.cos(angle) * radius;
+          const y = Math.sin(angle) * radius;
+          return (
+            <div
+              key={i}
+              className="absolute rounded-full"
+              style={{
+                width: i % 3 === 0 ? 4 : 2, 
+                height: i % 3 === 0 ? 4 : 2,
+                backgroundColor: i % 3 === 0 ? '#ff4c00' : '#5b1900',
+                opacity: i % 3 === 0 ? 0.2 : 0.1,
+                left: '50%',
+                top: '50%',
+                transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
+                zIndex: 2
+              }}
+            />
+          );
+        })}
 
         {/* Center Image */}
         <div
@@ -137,10 +165,10 @@ const CircularGallery = ({ images, centerImage }) => {
             height: imageSizes.center.height,
             transform: 'translate(-50%, -50%)',
             border: '4px solid #5b1900',
+            boxShadow: '0 8px 32px rgba(91, 25, 0, 0.15), 0 0 0 2px rgba(255, 76, 0, 0.05)',
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
-            transformStyle: 'preserve-3d',
-            boxShadow: '0 8px 30px rgba(91,25,0,0.2)'
+            transformStyle: 'preserve-3d'
           }}
         >
           <PreCachedImage
@@ -180,8 +208,8 @@ const CircularGallery = ({ images, centerImage }) => {
                 style={{
                   border: '3px solid #ff4c00',
                   boxShadow: hoveredIndex === index 
-                    ? '0 8px 25px rgba(255,76,0,0.25)'
-                    : '0 5px 15px rgba(91,25,0,0.12)',
+                    ? '0 10px 25px rgba(255, 76, 0, 0.3), 0 0 0 1px rgba(255, 76, 0, 0.5)'
+                    : '0 5px 15px rgba(91, 25, 0, 0.1), 0 0 0 1px rgba(255, 76, 0, 0.1)',
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                   backfaceVisibility: 'hidden',
                   WebkitBackfaceVisibility: 'hidden',
@@ -200,20 +228,6 @@ const CircularGallery = ({ images, centerImage }) => {
             </div>
           );
         })}
-
-        {/* Decorative Dots */}
-        {[...Array(8)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute left-1/2 top-1/2 rounded-full bg-[#5b1900]"
-            style={{
-              width: 4,
-              height: 4,
-              opacity: 0.15,
-              transform: `translate(-50%, -50%) rotate(${i * 45}deg) translateY(${containerSize.width * 0.39}px)`,
-            }}
-          />
-        ))}
       </div>
     </div>
   );
