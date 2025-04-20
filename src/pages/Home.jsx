@@ -10,7 +10,7 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-[#FDFBF7]">
       {/* Hero Section */}
-      <section className="relative -mt-4 min-h-[75vh] flex items-center">
+      <section className="relative pt-20 md:pt-16 lg:pt-0 -mt-4 min-h-[80vh] md:min-h-[75vh] flex items-center">
         {/* Background Elements */}
         <div className="absolute inset-0 -z-10">
           <div 
@@ -26,7 +26,7 @@ const Home = () => {
         </div>
 
         {/* Main Content */}
-        <div className="container mx-auto px-4 -mt-8">
+        <div className="container mx-auto px-4 mt-0 md:-mt-8">
           <div className="max-w-6xl mx-auto">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
               {/* Left Column - Text */}
@@ -43,13 +43,13 @@ const Home = () => {
                     transition={{ duration: 1, delay: 0.5 }}
                     className="h-1 w-16 bg-[#ff4c00] mb-8"
                   />
-                  <h1 className="text-5xl md:text-6xl font-light text-[#5b1900] mb-6">
+                  <h1 className="text-4xl md:text-5xl lg:text-6xl font-light text-[#5b1900] mb-6">
                     Trusted Corporate Supplier of
                     <span className="block text-[#ff4c00] mt-2">
                       Mobile Accessories & Event Food
                     </span>
                   </h1>
-                  <p className="text-xl text-neutral-600 max-w-lg">
+                  <p className="text-lg md:text-xl text-neutral-600 max-w-lg">
                     With 5+ years of experience, Fire Blink delivers premium mobile accessories 
                     and exceptional catering services tailored for corporate needs.
                   </p>
