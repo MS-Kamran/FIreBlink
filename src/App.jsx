@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Images } from './utils/images';
@@ -121,7 +121,7 @@ function App() {
   }
 
   return (
-    <Router>
+    <Router basename="/FireBlink">
       <div className="min-h-screen w-full bg-[#F8F9FA]">
         <Navbar />
         <AnimatePresence mode="wait">
@@ -132,6 +132,8 @@ function App() {
               <Route path="/services" element={<Services />} />
               <Route path="/portfolio" element={<Portfolio />} />
               <Route path="/contact" element={<Contact />} />
+              {/* Redirect any unknown routes to home */}
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
         </AnimatePresence>

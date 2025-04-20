@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import Logo from './Logo';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
 
   const navLinks = [
     { name: 'Home', path: '/' },
@@ -12,6 +13,10 @@ const Navbar = () => {
     { name: 'Portfolio', path: '/portfolio' },
     { name: 'Contact', path: '/contact' },
   ];
+
+  const isActive = (path) => {
+    return location.pathname === path;
+  };
 
   return (
     <nav className="bg-white border-b border-neutral-200/50 sticky top-0 z-50">
@@ -29,10 +34,15 @@ const Navbar = () => {
               <Link
                 key={link.name}
                 to={link.path}
-                className={`text-neutral-800 hover:text-[#ff4c00] transition-colors duration-300
+                className={`transition-colors duration-300
                   ${index === navLinks.length - 1 
                     ? 'bg-[#5b1900] text-white rounded-lg hover:bg-[#ff4c00] px-4 py-2' 
-                    : 'px-3 py-2'} 
+                    : `px-3 py-2 ${
+                        isActive(link.path)
+                          ? 'text-[#ff4c00]'
+                          : 'text-neutral-800 hover:text-[#ff4c00]'
+                      }`
+                  } 
                   text-sm font-medium`}
               >
                 {link.name}
@@ -62,11 +72,15 @@ const Navbar = () => {
         {isOpen && (
           <div className="md:hidden bg-white border-t border-neutral-200/50">
             <div className="px-2 pt-2 pb-3 space-y-1">
-              {navLinks.map((link, index) => (
+              {navLinks.map((link) => (
                 <Link
                   key={link.name}
                   to={link.path}
-                  className={`block px-3 py-2 rounded-md text-neutral-800 hover:text-[#ff4c00] hover:bg-neutral-50`}
+                  className={`block px-3 py-2 rounded-md 
+                    ${isActive(link.path)
+                      ? 'text-[#ff4c00] bg-neutral-50'
+                      : 'text-neutral-800 hover:text-[#ff4c00] hover:bg-neutral-50'
+                    }`}
                   onClick={() => setIsOpen(false)}
                 >
                   {link.name}
